@@ -17,19 +17,19 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            // Point this to your FastAPI backend URL (usually port 8000)
-            const response = await fetch('http://localhost:8000/auth/login', {
+            // CALL YOUR INTERNAL NEXT.JS ROUTE
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ username: email, password }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
             });
 
-            if (!response.ok) throw new Error('Invalid email or password');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Login Failed');
+            }
 
-            const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-
-            await Swal.fire({ icon: 'success', title: 'Welcome back!', timer: 1500 });
+            await Swal.fire({ icon: 'success', title: 'Welcome!', timer: 1500 });
             router.push('/dashboard');
         } catch (err: any) {
             Swal.fire({ icon: 'error', title: 'Login Failed', text: err.message });
@@ -39,29 +39,16 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-surface p-4">
-            <Card className="w-full max-w-sm p-8 shadow-2xl">
-                <h2 className="text-heading font-bold text-gray-900 mb-6">Login to HRM</h2>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+            <Card className="w-full max-w-sm p-8 shadow-xl bg-white">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Login to HRM</h2>
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                    <Input
-                        type="email"
-                        placeholder="Email Address"
-                        required
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                    <Input
-                        type="password"
-                        placeholder="Password"
-                        required
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <Button type="submit" className="w-full h-12" disabled={loading}>
+                    <Input type="email" placeholder="Email" required onChange={(e) => setEmail(e.target.value)} />
+                    <Input type="password" placeholder="Password" required onChange={(e) => setPassword(e.target.value)} />
+                    <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? 'Authenticating...' : 'Login'}
                     </Button>
                 </form>
-                <p className="mt-4 text-center text-caption text-secondary">
-                    Don't have an account? <a href="/register" className="text-primary font-bold">Register</a>
-                </p>
             </Card>
         </div>
     );

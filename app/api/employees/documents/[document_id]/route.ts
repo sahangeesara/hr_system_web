@@ -1,28 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-// GET: Download Document
-export async function GET(req: Request, { params }: { params: { document_id: string } }) {
-    const { data: doc, error: dbError } = await supabase
-        .from('employee_documents')
-        .select('stored_file_name')
-        .eq('id', params.document_id)
-        .single();
-
-    if (dbError || !doc) {
-        return NextResponse.json({ error: 'Document record not found' }, { status: 404 });
-    }
-
-    const { data, error: urlError } = await supabase.storage
-        .from('employee-docs')
-        .createSignedUrl(doc.stored_file_name, 60);
-
-    if (urlError) {
-        return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 });
-    }
-
-    return NextResponse.json({ url: data.signedUrl });
-}
 
 // DELETE: Remove Document
 export async function DELETE(req: Request, { params }: { params: { document_id: string } }) {

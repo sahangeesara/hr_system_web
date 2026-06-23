@@ -1,53 +1,63 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import Swal from 'sweetalert2';
+import { EmployeeModal } from '@/components/employees/EmployeeModal';
 
-export default function OnboardingPage() {
-    const [formData, setFormData] = useState({
-        first_name: '', last_name: '', email: '', phone: '', department_id: '',
-    });
-    const [files, setFiles] = useState<FileList | null>(null);
+export default function EmployeesPage() {
+    const [employees, setEmployees] = useState<any[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingEmployee, setEditingEmployee] = useState<any | null>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            // Validate file size (5MB) and type
-            const validFiles = Array.from(e.target.files).filter(file => {
-                const isSizeValid = file.size <= 5 * 1024 * 1024;
-                const isTypeValid = ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type);
-                if (!isSizeValid) Swal.fire('Error', `${file.name} is too large (>5MB)`, 'error');
-                return isSizeValid && isTypeValid;
-            });
-            setFiles(e.target.files);
-        }
+    const fetchEmployees = async () => {
+        const res = await fetch('/api/employees');
+        const data = await res.json();
+        setEmployees(Array.isArray(data) ? data : []);
     };
 
-    const submitOnboarding = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const data = new FormData();
-        Object.entries(formData).forEach(([key, value]) => data.append(key, value));
-        if (files) Array.from(files).forEach(file => data.append('documents', file));
+    useEffect(() => { fetchEmployees(); }, []);
 
-        const response = await fetch('/api/employees', { method: 'POST', body: data });
-        if (response.ok) Swal.fire('Success', 'Employee onboarded', 'success');
+    const handleEdit = (emp: any) => {
+        setEditingEmployee(emp);
+        setIsModalOpen(true);
     };
 
     return (
-        <form onSubmit={submitOnboarding} className="p-8 space-y-6">
-            <h2 className="text-heading font-bold">New Employee Onboarding</h2>
-            <div className="grid grid-cols-2 gap-4">
-                <Input placeholder="First Name" onChange={(e) => setFormData({...formData, first_name: e.target.value})} />
-                <Input placeholder="Last Name" onChange={(e) => setFormData({...formData, last_name: e.target.value})} />
-                <Input type="email" placeholder="Email" onChange={(e) => setFormData({...formData, email: e.target.value})} />
+        <div className="p-8 bg-white min-h-screen text-black">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Employee Directory</h1>
+                <Button onClick={() => { setEditingEmployee(null); setIsModalOpen(true); }} className="bg-blue-600 text-white">
+                    + Add Employee
+                </Button>
             </div>
 
-            <div className="border-2 border-dashed p-6 rounded-lg">
-                <label className="block mb-2 font-semibold">Upload Documents (PDF, JPG, PNG - Max 5MB)</label>
-                <input type="file" multiple onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
-            </div>
+            <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-100">
+                <tr>
+                    <th className="p-4">Name</th>
+                    <th className="p-4">Email</th>
+                    <th className="p-4">Actions</th>
+                </tr>
+                </thead>
+                <tbody className="divide-y">
+                {employees.map((emp) => (
+                    <tr key={emp.id}>
+                        <td className="p-4">{emp.first_name} {emp.last_name}</td>
+                        <td className="p-4">{emp.email}</td>
+                        <td className="p-4 flex gap-2">
+                            <Button onClick={() => handleEdit(emp)} className="bg-gray-200 text-black">Edit</Button>
+                            <a href={`/api/employees/download?empId=${emp.id}`} className="text-blue-600">Download</a>
+                        </td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
 
-            <Button type="submit">Complete Onboarding</Button>
-        </form>
+            <EmployeeModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchEmployees}
+                initialData={editingEmployee} // Pass the data here
+            />
+        </div>
     );
 }
