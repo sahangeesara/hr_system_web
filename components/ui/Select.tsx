@@ -1,0 +1,8 @@
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+    options: { label: string; value: string | number }[];
+}
+export const Select = ({ options, ...props }: SelectProps) => (
+    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary outline-none" {...props}>
+        {options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+    </select>
+);
