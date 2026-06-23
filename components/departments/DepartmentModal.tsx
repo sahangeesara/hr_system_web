@@ -14,6 +14,7 @@ export function DepartmentModal({ isOpen, onClose, onSuccess, initialData }: Pro
     const [formData, setFormData] = useState({ name: '', description: '', is_active: true });
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (initialData) setFormData(initialData);
         else setFormData({ name: '', description: '', is_active: true });
     }, [initialData]);

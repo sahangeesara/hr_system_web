@@ -14,9 +14,25 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json(data[0]);
 }
 
-// DELETE: Remove position
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-    const { error } = await supabase.from('positions').delete().eq('id', params.id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+// DELETE: Remove position by ID from the URL path
+export async function DELETE(
+    req: Request,
+    { params }: { params: { id: string } }
+) {
+    const { id } = params;
+
+    if (!id) {
+        return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    const { error } = await supabase
+        .from('positions')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     return NextResponse.json({ success: true });
 }
